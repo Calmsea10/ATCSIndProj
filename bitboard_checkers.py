@@ -81,7 +81,7 @@ def can_capture(board1,board2,team,pos):
     else:
         return capture_dirs
 
-def get_possible_captures(board1,board2,capture_list,team):
+def get_possible_captures(board1,board2,team,capture_list):
     return_moves=[]
     holder=[]
     pos=capture_list[0]
@@ -90,28 +90,42 @@ def get_possible_captures(board1,board2,capture_list,team):
         holder=capture_list[:]
         holder[0]=capture_list[0]-7
         holder.append(pos-(3+((pos//4)%2)))
-        return_moves.extend(get_possible_captures(board1,board2,holder,team))
+        return_moves.extend(get_possible_captures(board1,board2,team,holder))
     if 2 in capture_dirs:
         holder=capture_list[:]
         holder[0]=capture_list[0]-9
         holder.append(pos-(4+((pos//4)%2)))
-        return_moves.extend(get_possible_captures(board1,board2,holder,team))
+        return_moves.extend(get_possible_captures(board1,board2,team,holder))
     if 3 in capture_dirs:
         holder=capture_list[:]
         holder[0]=capture_list[0]+7
         holder.append(pos+(3+((pos//4)%2)))
-        return_moves.extend(get_possible_captures(board1,board2,holder,team))
+        return_moves.extend(get_possible_captures(board1,board2,team,holder))
     if 4 in capture_dirs:
         holder=capture_list[:]
         holder[0]=capture_list[0]+9
         holder.append(pos+(4+((pos//4)%2)))
-        return_moves.extend(get_possible_captures(board1,board2,holder,team))
+        return_moves.extend(get_possible_captures(board1,board2,team,holder))
     if 0 in capture_dirs:
         capture_list.append(-1)
         return capture_list
     return return_moves
 
-def move(board1,board2,start_pos,end_pos,team):
+def get_captures(board1,board2,team,pos):
+    capture_list=get_possible_captures(board1,board2,team,[pos])
+    all_captures=[]
+    current_capture=[]
+    for i in range(0,len(capture_list)):
+        if capture_list[i]==-1:
+            if len(current_capture)>1:
+                all_captures.append(current_capture)
+            current_capture=[]
+        else:
+            current_capture.append(capture_list[i])
+    return all_captures
+
+
+def move(board1,board2,team,start_pos,end_pos):
     if team:
         if board1>>(start_pos)&1:
             if end_pos in get_valid_moves(board1,board2,team,start_pos):
@@ -132,11 +146,11 @@ def main():
     board_red=initialize_red_board(board_red)
     board_repr(board_red+board_white)
     print(get_valid_moves(board_white,board_red,True,23))
-    board_white=move(board_white,board_red,23,18,True)
+    board_white=move(board_white,board_red,True,23,18)
     print(get_valid_moves(board_red,board_white,False,9))
-    board_red=move(board_red,board_white,9,14,False)
+    board_red=move(board_red,board_white,False,9,14)
     board_repr(board_white+board_red)
-    print(get_possible_captures(board_white,board_red,[18],True))
+    print(get_captures(board_white,board_red,True,18))
     print(get_valid_moves(board_white,board_red,True,18))
 
 if __name__ == "__main__":
