@@ -14,7 +14,7 @@ def board_repr(board):
             print((board>>((4*i)+j))&1,end=' ')
         print('')
 
-def get_valid_moves(board1,board2,team,pos):
+def get_moves(board1,board2,team,pos):
     if not (board1>>pos)&1:
         return []
     else:
@@ -124,20 +124,47 @@ def get_captures(board1,board2,team,pos):
             current_capture.append(capture_list[i])
     return all_captures
 
-
 def move(board1,board2,team,start_pos,end_pos):
     if team:
         if board1>>(start_pos)&1:
-            if end_pos in get_valid_moves(board1,board2,team,start_pos):
+            if end_pos in get_moves(board1,board2,team,start_pos):
                 board1=board1|(1<<end_pos)
                 board1=board1^(1<<start_pos)
                 return board1
     else:
         if board1>>(start_pos)&1:
-            if end_pos in get_valid_moves(board1,board2,team,start_pos):
+            if end_pos in get_moves(board1,board2,team,start_pos):
                 board1=board1|(1<<end_pos)
                 board1=board1^(1<<start_pos)
                 return board1
+
+def capture(board1,board2,team,start_pos,capture_list):
+    for i in range(0,len(capture_list)-1):
+        board2=board2^(1<<capture_list[i])
+    board1=board2|(1<<capture_list[len(capture_list)])
+    return (board1,board2)
+
+def turn(board_white,board_red,team,pos,index):
+    if team:
+        board1=board_white
+        board2=board_red
+    else:
+        board1=board_red
+        board2=board_white
+    capture_list=get_captures(board1,board2,team,pos)
+    move_list=get_moves(board1,board2,team,pos)
+    if len(capture_list[0])>0:
+        boards=capture(board1,board2,team,pos,capture_list[index])
+        if team:
+            return (boards[0],boards[1])
+        else:
+            return (boards[1],boards[0])
+    else:
+        board1=move(board1,board2,team,pos,move_list[index])
+        if team:
+            return (board1,board2)
+        else:
+            return (board2,board1)
 
 def main():
     board_white=0
@@ -145,13 +172,7 @@ def main():
     board_white=initialize_white_board(board_white)
     board_red=initialize_red_board(board_red)
     board_repr(board_red+board_white)
-    print(get_valid_moves(board_white,board_red,True,23))
-    board_white=move(board_white,board_red,True,23,18)
-    print(get_valid_moves(board_red,board_white,False,9))
-    board_red=move(board_red,board_white,False,9,14)
-    board_repr(board_white+board_red)
-    print(get_captures(board_white,board_red,True,18))
-    print(get_valid_moves(board_white,board_red,True,18))
+    
 
 if __name__ == "__main__":
     main()
