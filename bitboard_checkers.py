@@ -1,3 +1,7 @@
+import pygame
+import math
+import time
+
 def initialize_white_board(white_board):
     for i in range(20,33):
         white_board=white_board|(1<<i)
@@ -13,6 +17,57 @@ def board_repr(board):
         for j in range(0,4):
             print((board>>((4*i)+j))&1,end=' ')
         print('')
+
+def display_board(board1,board2,screen):
+    for i in range(0,8):
+        for j in range(0,8):
+            if i%2==0:
+                if j%2==0:
+                    pygame.draw.rect(screen,"black",(j*64,i*64,64,64))
+            if i%2!=0:
+                if j%2!=0:
+                    pygame.draw.rect(screen,"black",(j*64,i*64,64,64))
+        for k in range(0,4):
+            if (board1>>(4*i)+k)&1:
+                if (i%2)==0:
+                    pygame.draw.circle(screen,"burlywood4",((k)*128+96,i*64+32),32)
+                else:
+                    pygame.draw.circle(screen,"burlywood4",((k)*128+32,i*64+32),32)
+            if (board2>>(4*i)+k)&1:
+                if (i%2)==0:
+                    pygame.draw.circle(screen,"darkred",((k)*128+96,i*64+32),32)
+                else:
+                    pygame.draw.circle(screen,"darkred",((k)*128+32,i*64+32),32)
+    return 0
+
+def display_moves(board_white,board_red,pos,team,screen):
+    if team:
+        board1=board_white
+        board2=board_red
+    else:
+        board1=board_red
+        board2=board_white
+    capture_list=get_captures(board1,board2,team,pos)
+    move_list=get_moves(board1,board2,team,pos)
+    if len(capture_list)>0:
+        for i in range(0,8):
+            for k in range(0,4):
+                if ((4*i)+k) in capture_list[0]:
+                    if (i%2)==0:
+                        pygame.draw.circle(screen,"yellow",((k)*128+96,i*64+32),32)
+                    else:
+                        pygame.draw.circle(screen,"yellow",((k)*128+32,i*64+32),32)
+        input("Press \'any\' key to continue")
+    else:
+        print(move_list)
+        for i in range(0,8):
+            for k in range(0,4):
+                if ((4*i)+k) in move_list:
+                    if (i%2)==0:
+                        pygame.draw.circle(screen,"yellow",((k)*128+96,i*64+32),32)
+                    else:
+                        pygame.draw.circle(screen,"yellow",((k)*128+32,i*64+32),32)
+        input("Press \'any\' key to continue")
 
 def get_moves(board1,board2,team,pos):
     if not (board1>>pos)&1:
@@ -167,11 +222,27 @@ def turn(board_white,board_red,team,pos,index):
             return (board2,board1)
 
 def main():
+    running=True
     board_white=0
     board_red=0
+    pygame.display.init()
+    clock=pygame.time.Clock()
+    screen=pygame.display.set_mode((512,512))
     board_white=initialize_white_board(board_white)
     board_red=initialize_red_board(board_red)
     board_repr(board_red+board_white)
+    pos=0
+    while running==True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type ==pygame.MOUSEBUTTONDOWN:
+                print("Input detected")
+                pos=(pygame.mouse.get_pos()[0]//128)+((pygame.mouse.get_pos()[1]//64)*4)
+        display_board(board_white,board_red,screen)
+        display_moves(board_white,board_red,pos,True,screen)
+        pygame.display.flip()
+        clock.tick(60)
     
 
 if __name__ == "__main__":
