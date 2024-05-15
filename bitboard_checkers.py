@@ -47,6 +47,10 @@ def display_moves(board_white,board_red,pos,team,screen):
     else:
         board1=board_red
         board2=board_white
+    all_captures=capture_positions(board1,board2,team)
+    if len(all_captures)>0:
+        if pos not in all_captures:
+            return 0
     capture_list=get_shallow_captures(board1,board2,team,pos)
     move_list=get_moves(board1,board2,team,pos)
     if len(capture_list)>0:
@@ -136,6 +140,8 @@ def can_capture(board1,board2,team,pos):
 
 def get_shallow_captures(board1,board2,team,pos):
     return_moves=[]
+    if not (board1>>pos)&1:
+        return return_moves
     capture_dirs=can_capture(board1,board2,team,pos)
     if 1 in capture_dirs:
         return_moves.append([pos-7,(pos-(3+((pos//4)%2)))])
@@ -190,6 +196,13 @@ def get_captures(board1,board2,team,pos):
             current_capture.append(capture_list[i])
     return all_captures
 
+def capture_positions(board1,board2,team):
+    capture_positions=[]
+    for i in range(0,32):
+        if len(get_shallow_captures(board1,board2,team,i))>0:
+            capture_positions.append(i)
+    return capture_positions
+
 def move(board1,board2,team,start_pos,end_pos):
     if team:
         if board1>>(start_pos)&1:
@@ -240,6 +253,8 @@ def main():
     pos=0
     team=True
     piece_selected=False
+    selected_piece=32
+    capture_forced=False
     pygame.display.init()
     clock=pygame.time.Clock()
     screen=pygame.display.set_mode((512,512))
@@ -252,7 +267,42 @@ def main():
                 running = False
             if event.type ==pygame.MOUSEBUTTONDOWN:
                 pos=(pygame.mouse.get_pos()[0]//128)+((pygame.mouse.get_pos()[1]//64)*4)
-                if piece_selected==False:
+                if piece_selected:
+                    if team==True:
+                        board1=board_white
+                        board2=board_red
+                    else:
+                        board1=board_red
+                        board2=board_white
+                    capture_pos=capture_positions(board1,board2,team)
+                    print(capture_pos)
+                    if len(capture_pos)>0:
+                        if selected_piece in capture_pos:
+                            captures=get_shallow_captures(board1,board2,team,selected_piece)
+                            for i in range(0,len(captures)):
+                                if captures[i][0]==pos:
+                                    boards=capture(board1,board2,team,selected_piece,captures[i])
+                                    board1=boards[0]
+                                    board2=boards[1]
+                                    break
+                        else:
+                            piece_selected=False
+                            selected_piece=32
+                            pos=32
+                    elif pos in get_moves(board1,board2,team,selected_piece):
+                        board1=move(board1,board2,team,selected_piece,pos)
+                        selected_piece=pos
+                    else:
+                        piece_selected=False
+                        selected_piece=32
+                        pos=32
+                    if team==True:
+                        board_white=board1
+                        board_red=board2
+                    else:
+                        board_white=board2
+                        board_red=board1
+                else:
                     if (board_white>>pos)&1:
                         team=True
                         piece_selected=True
@@ -262,36 +312,7 @@ def main():
                         piece_selected=True
                         selected_piece=pos
                     print(selected_piece)
-                else:
-                    if pos==selected_piece:
-                        selected_piece=0
-                        piece_selected=False
-                        pos=0
-                    else:
-                        if team==True:
-                            board1=board_white
-                            board2=board_red
-                        else:
-                            board1=board_red
-                            board2=board_white
-                        capture_list=get_shallow_captures(board1,board2,team,selected_piece)
-                        if len(capture_list)>0:
-                            for i in range(0,len(capture_list)):
-                                if capture_list[i][0]==pos:
-                                    boards=capture(board1,board2,team,selected_piece,capture_list[i])
-                                    board1=boards[0]
-                                    board2=boards[1]
-                                    selected_piece=pos
-                                    break
-                        elif pos in get_moves(board1,board2,team,selected_piece):
-                            board1=move(board1,board2,team,selected_piece,pos)
-                            selected_piece=pos
-                        if team==True:
-                            board_white=board1
-                            board_red=board2
-                        else:
-                            board_white=board2
-                            board_red=board1
+                    print(team)
         screen.fill("gray")
         display_moves(board_white,board_red,pos,team,screen)
         display_board(board_white,board_red,screen)
