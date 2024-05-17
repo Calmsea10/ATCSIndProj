@@ -41,6 +41,11 @@ def display_board(board1,board2,screen):
     return 0
 
 def display_moves(board_white,board_red,pos,team,screen):
+    if not pos==32:
+        if (pos//4)%2==0:
+            pygame.draw.circle(screen,"yellow",(((pos%4)*128)+96,((pos//4)*64)+32),32,4)
+        else:
+            pygame.draw.circle(screen,"yellow",(((pos%4)*128)+32,((pos//4)*64)+32),32,4)
     if team:
         board1=board_white
         board2=board_red
@@ -57,7 +62,7 @@ def display_moves(board_white,board_red,pos,team,screen):
         for i in range(0,8):
             for k in range(0,4):
                 for j in range(0,len(capture_list)):
-                    if ((4*i)+k) in capture_list[j]:
+                    if capture_list[j][0]==((4*i)+k):
                         if (i%2)==0:
                             pygame.draw.circle(screen,"yellow",((k)*128+96,i*64+32),32)
                         else:
@@ -71,6 +76,21 @@ def display_moves(board_white,board_red,pos,team,screen):
                     else:
                         pygame.draw.circle(screen,"yellow",((k)*128+32,i*64+32),32)
     return 0
+
+def evaluate_board(board1,board2,team):
+    value=0
+    if team:
+        board_white=board1
+        board_red=board2
+    else:
+        board_white=board2
+        board_red=board1
+    for i in range(0,32):
+        if (board_white>>i)&1:
+            value+=1
+        if (board_red>>i)&1:
+            value-=1
+    return value
 
 def get_moves(board1,board2,team,pos):
     if not (board1>>pos)&1:
@@ -217,34 +237,44 @@ def move(board1,board2,team,start_pos,end_pos):
                 board1=board1^(1<<start_pos)
                 return board1
 
-def capture(board1,board2,team,start_pos,capture_list):
+def capture(board1,board2,start_pos,capture_list):
     for i in range(1,len(capture_list)):
         board2=board2^(1<<capture_list[i])
     board1=board1|(1<<capture_list[0])
     board1=board1^(1<<start_pos)
     return (board1,board2)
 
-def turn(board_white,board_red,team,pos,index):
-    if team:
-        board1=board_white
-        board2=board_red
+def get_all_moves(board1,board2,team):
+    capture_boards=[]
+    move_boards=[]
+    for i in range(0,32):
+        capture_list=get_captures(board1,board2,team,i)
+        moves_list=get_moves(board1,board2,team,i)
+        for j in range(0,len(capture_list)):
+            capture_boards.append(capture(board1,board2,i,capture_list[j]))
+        for k in range(0,len(moves_list)):
+            move_boards.append((move(board1,board2,team,i,moves_list[k]),board2))
+    if len(capture_boards)>0:
+        return capture_boards
     else:
-        board1=board_red
-        board2=board_white
-    capture_list=get_captures(board1,board2,team,pos)
-    move_list=get_moves(board1,board2,team,pos)
-    if len(capture_list[0])>0:
-        boards=capture(board1,board2,team,pos,capture_list[index])
-        if team:
-            return (boards[0],boards[1])
-        else:
-            return (boards[1],boards[0])
+        return move_boards
+
+def minimax(board1,board2,team,depth):
+    evals=[]
+    if board1==0:
+        return [-1*math.inf]
+    elif board2==0:
+        return [math.inf]
+    elif depth==0:
+        return [evaluate_board(board1,board2,team)]
     else:
-        board1=move(board1,board2,team,pos,move_list[index])
-        if team:
-            return (board1,board2)
-        else:
-            return (board2,board1)
+        boards=get_all_moves(board1,board2,team)
+        for i in range(0,len(boards)):
+            if team:
+                evals.append(min(minimax(boards[i][1],boards[i][0],not team,depth-1)))
+            else:
+                evals.append(max(minimax(boards[i][1],boards[i][0],not team,depth-1)))
+    return evals
 
 def main():
     running=True
@@ -281,14 +311,10 @@ def main():
                             captures=get_shallow_captures(board1,board2,team,selected_piece)
                             for i in range(0,len(captures)):
                                 if captures[i][0]==pos:
-                                    boards=capture(board1,board2,team,selected_piece,captures[i])
+                                    boards=capture(board1,board2,selected_piece,captures[i])
                                     board1=boards[0]
                                     board2=boards[1]
                                     break
-                        else:
-                            piece_selected=False
-                            selected_piece=32
-                            pos=32
                     elif pos in get_moves(board1,board2,team,selected_piece):
                         board1=move(board1,board2,team,selected_piece,pos)
                         selected_piece=pos
@@ -313,9 +339,10 @@ def main():
                         selected_piece=pos
                     print(selected_piece)
                     print(team)
+                print(minimax(board_red,board_white,False,3))
         screen.fill("gray")
-        display_moves(board_white,board_red,pos,team,screen)
         display_board(board_white,board_red,screen)
+        display_moves(board_white,board_red,pos,team,screen)
         pygame.display.flip()
         clock.tick(60)
     
