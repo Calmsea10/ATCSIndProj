@@ -3,7 +3,7 @@ import math
 import time
 
 def initialize_white_board(white_board):
-    for i in range(20,33):
+    for i in range(20,32):
         white_board=white_board|(1<<i)
     return white_board
 
@@ -11,6 +11,16 @@ def initialize_red_board(red_board):
     for i in range(0,12):
         red_board=red_board|(1<<i)
     return red_board
+
+def update_kings(board_white,board_red,kings_white,kings_red):
+    for i in range(0,4):
+        if (board_white>>i)&1:
+            kings_white=kings_white|(1<<i)
+            board_white=board_white&~(1<<i)
+    for j in range(28,32):
+        if (board_red>>j)&1:
+            kings_red=kings_red|(1<<i)
+            board_red=board_red&~(1<<i)
 
 def board_repr(board):
     for i in range(0,8):
@@ -92,36 +102,40 @@ def evaluate_board(board1,board2,team):
             value-=1
     return value
 
-def get_moves(board1,board2,team,pos):
-    if not (board1>>pos)&1:
+def get_moves(board1,board2,board1k,board2k,team,pos):
+    if not ((board1>>pos)&1 or (board1k>>pos)&1):
         return []
     else:
+        if (board1k>>pos)&1:
+            king=True
+        else:
+            king=False
         moves=[]
-        if team:
+        if team or king:
             move1=(pos-(3+((pos//4)%2)))
             move2=(pos-(4+((pos//4)%2)))
             if move1>=0:
                 if (pos//4)-(move1//4)==1:
-                    if (not (board1>>move1)&1) and (not (board2>>move1)&1):
+                    if (not (board1>>move1)&1) and (not (board2>>move1)&1) and (not (board1k>>move1)&1) and (not (board2k>>move1)&1):
                         moves.append(move1)
             if move2>=0:
                 if (pos//4)-(move2//4)==1:
-                    if (not (board1>>move2)&1) and (not (board2>>move2)&1):
+                    if (not (board1>>move2)&1) and (not (board2>>move2)&1) and (not (board1k>>move2)&1) and (not (board2k>>move2)&1):
                         moves.append(move2)
-        else:
+        if (not team) or king:
             move1=(pos+(3+(((pos//4)+1)%2)))
             move2=(pos+(4+(((pos//4)+1)%2)))
             if move1<=31:
                 if (pos//4)-(move1//4)==-1:
-                    if (not (board1>>move1)&1) and (not (board2>>move1)&1):
+                    if (not (board1>>move1)&1) and (not (board2>>move1)&1) and (not (board1k>>move1)&1) and (not (board2k>>move1)&1):
                         moves.append(move1)
             if move2<=31:
                 if (pos//4)-(move2//4)==-1:
-                    if (not (board1>>move2)&1) and (not (board2>>move2)&1):
+                    if (not (board1>>move2)&1) and (not (board2>>move2)&1) and (not (board1k>>move2)&1) and (not (board2k>>move2)&1):
                         moves.append(move2)
         return moves
 
-def can_capture(board1,board2,team,pos):
+def can_capture(board1,board2,board1k,board2k,team,pos):
     capture_dirs=[]
     if team:
         capture1=(pos-7)
@@ -130,13 +144,13 @@ def can_capture(board1,board2,team,pos):
         move2=(pos-(4+((pos//4)%2)))
         if capture1>=0:
             if (pos//4)-(capture1//4)==2 and (pos//4)-(move1//4)==1:
-                if (not ((board1>>capture1)&1)) and (not ((board2>>capture1)&1)):
-                    if (board2>>move1)&1:
+                if (not ((board1>>capture1)&1)) and (not ((board2>>capture1)&1)) and (not ((board1k>>capture1)&1)) and (not ((board2k>>capture1)&1)):
+                    if ((board2>>move1)&1) or ((board2k>>move1)&1):
                         capture_dirs.append(1)
         if capture2>=0:
             if (pos//4)-(capture2//4)==2 and (pos//4)-(move2//4)==1:
-                if (not ((board1>>capture2)&1)) and (not ((board2>>capture2)&1)):
-                    if (board2>>move2)&1:
+                if (not ((board1>>capture2)&1)) and (not ((board2>>capture2)&1)) and (not ((board1k>>capture2)&1)) and (not ((board2k>>capture2)&1)):
+                    if ((board2>>move2)&1) or ((board2k>>move2)&1):
                         capture_dirs.append(2)
     else:
         capture1=(pos+7)
@@ -145,19 +159,13 @@ def can_capture(board1,board2,team,pos):
         move2=(pos+(4+(((pos//4)+1)%2)))
         if capture1<=31:
             if (capture1//4)-(pos//4)==2 and (move1//4)-(pos//4)==1:
-                if (not ((board1>>capture1)&1)) and (not ((board2>>capture1)&1)):
-                    if (board2>>move1)&1:
-                        print(move1)
-                        print(pos)
-                        print('')
+                if (not ((board1>>capture1)&1)) and (not ((board2>>capture1)&1)) and (not ((board1k>>capture1)&1)) and (not ((board2k>>capture1)&1)):
+                    if ((board2>>move1)&1) or ((board2k>>move1)&1):
                         capture_dirs.append(3)
         if capture2<=31:
             if (capture2//4)-(pos//4)==2 and (move2//4)-(pos//4)==1:
-                if (not ((board1>>capture2)&1)) and (not ((board2>>capture2)&1)):
-                    if (board2>>move2)&1:
-                        print(move2)
-                        print(pos)
-                        print('')
+                if (not ((board1>>capture2)&1)) and (not ((board2>>capture2)&1)) and (not ((board1k>>capture2)&1)) and (not ((board2k>>capture2)&1)):
+                    if ((board2>>move2)&1) or ((board2k>>move2)&1):
                         capture_dirs.append(4)
     if len(capture_dirs)==0:
         return [0]
