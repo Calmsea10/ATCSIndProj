@@ -46,9 +46,11 @@ def display_board(board1,board2,board1k,board2k,screen):
                     pygame.draw.circle(screen,"burlywood4",((k)*128+32,i*64+32),32)
             if (board1k>>(4*i)+k)&1:
                 if (i%2)==0:
-                    pygame.draw.rect(screen,"burlywood4",(((k)*128+96,i*64+32),(32,32)))
+                    pygame.draw.circle(screen,"burlywood4",((k)*128+96,i*64+32),32)
+                    pygame.draw.rect(screen,"darkolivegreen4",(((k)*128+76,i*64+12),(40,40)))
                 else:
-                    pygame.draw.rect(screen,"burlywood4",(((k)*128+32,i*64+32),(32,32)))
+                    pygame.draw.circle(screen,"burlywood4",((k)*128+32,i*64+32),32)
+                    pygame.draw.rect(screen,"darkolivegreen4",(((k)*128+12,i*64+12),(40,40)))
             if (board2>>(4*i)+k)&1:
                 if (i%2)==0:
                     pygame.draw.circle(screen,"darkred",((k)*128+96,i*64+32),32)
@@ -56,9 +58,11 @@ def display_board(board1,board2,board1k,board2k,screen):
                     pygame.draw.circle(screen,"darkred",((k)*128+32,i*64+32),32)
             if (board2k>>(4*i)+k)&1:
                 if (i%2)==0:
-                    pygame.draw.rect(screen,"darkred",(((k)*128+64,i*64),(64,64)))
+                    pygame.draw.circle(screen,"darkred",((k)*128+96,i*64+32),32)
+                    pygame.draw.rect(screen,"coral4",(((k)*128+76,i*64+12),(40,40)))
                 else:
-                    pygame.draw.rect(screen,"darkred",(((k)*128,i*64),(64,64)))
+                    pygame.draw.circle(screen,"darkred",((k)*128+32,i*64+32),32)
+                    pygame.draw.rect(screen,"coral4",(((k)*128+12,i*64+12),(40,40)))
     return 0
 
 def display_moves(board_white,board_red,board_wk,board_rk,pos,team,screen):
@@ -386,9 +390,7 @@ def main():
                             if selected_piece in capture_pos:
                                 captures=get_shallow_captures(board1,board2,board1k,board2k,team,selected_piece)
                                 for i in range(0,len(captures)):
-                                    print(captures[i])
                                     if captures[i][0]==pos:
-                                        print('e')
                                         boards=capture(board1,board2,board1k,board2k,selected_piece,captures[i])
                                         board1=boards[0]
                                         board2=boards[2]
@@ -434,19 +436,29 @@ def main():
                             piece_selected=True
                             selected_piece=pos
                 else:
-                    evals=minimax(board_red,board_white,board_rk,board_wk,False,11,-1*math.inf,math.inf)
                     moves=get_all_moves(board_red,board_white,board_rk,board_wk,False)
-                    best_pos=evals[1]
-                    print(evals[0])
-                    board_red=moves[best_pos][0]
-                    board_white=moves[best_pos][1]
-                    board_rk=moves[best_pos][2]
-                    board_wk=moves[best_pos][3]
-                    boards=update_kings(board_white,board_red,board_wk,board_rk)
-                    board_white=boards[0]
-                    board_red=boards[1]
-                    board_wk=boards[2]
-                    board_rk=boards[3]
+                    if len(moves)==1:
+                        board_red=moves[0][0]
+                        board_white=moves[0][1]
+                        board_rk=moves[0][2]
+                        board_wk=moves[0][3]
+                        boards=update_kings(board_white,board_red,board_wk,board_rk)
+                        board_white=boards[0]
+                        board_red=boards[1]
+                        board_wk=boards[2]
+                        board_rk=boards[3]
+                    else:
+                        evals=minimax(board_red,board_white,board_rk,board_wk,False,12,-1*math.inf,math.inf)
+                        best_pos=evals[1]
+                        board_red=moves[best_pos][0]
+                        board_white=moves[best_pos][1]
+                        board_rk=moves[best_pos][2]
+                        board_wk=moves[best_pos][3]
+                        boards=update_kings(board_white,board_red,board_wk,board_rk)
+                        board_white=boards[0]
+                        board_red=boards[1]
+                        board_wk=boards[2]
+                        board_rk=boards[3]
                     turn=True
         screen.fill("gray")
         display_board(board_white,board_red,board_wk,board_rk,screen)

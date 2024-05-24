@@ -1,7 +1,7 @@
 # ATCS_checkers
 Ennio Sim
 
-Release 1.0 - 5/23/2024
+Release 1.2 - 5/23/2024
 
 ATCS_checkers uses the negamax algorithm to play a game of checkers against the user. 
 
@@ -14,7 +14,11 @@ Captures are forced. If multiple pieces can capture, you may choose which captur
 After you have moved, clicking anywhere will end your turn and the computer will move.
 
 Known Issues:
-*Placeholder sprites for king pieces
 *Poor performance on negamax implementation
 *Negamax does not implement quiet position search
-*Negamax does not force captures for king pieces
+
+Changelog:
+-Improved negamax performance with alpha-beta pruning
+-Improved performance when only one move is available by not using negamax in these situations
+-Updated king sprites
+-Increased negamax search depth
