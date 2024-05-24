@@ -318,22 +318,39 @@ def get_all_moves(board1,board2,board1k,board2k,team):
     else:
         return move_boards
 
-def minimax(board1,board2,board1k,board2k,team,depth):
-    evals=[]
+def minimax(board1,board2,board1k,board2k,team,depth,alpha,beta):
     if board1==0:
-        return [-1*math.inf]
+        return (-1*math.inf,0)
     elif board2==0:
-        return [math.inf]
+        return (math.inf,0)
     elif depth==0:
-        return [evaluate_board(board1,board2,board1k,board2k,team)]
-    else:
+        return (evaluate_board(board1,board2,board1k,board2k,team),0)
+    if team:
+        best_index=0
+        node_val=-1*math.inf
         boards=get_all_moves(board1,board2,board1k,board2k,team)
         for i in range(0,len(boards)):
-            if team:
-                evals.append(max(minimax(boards[i][1],boards[i][0],boards[i][3],boards[i][2],not team,depth-1)))
-            else:
-                evals.append(min(minimax(boards[i][1],boards[i][0],boards[i][3],boards[i][2],not team,depth-1)))
-    return evals
+            evals=minimax(boards[i][1],boards[i][0],boards[i][3],boards[i][2],not team,depth-1,alpha,beta)
+            if evals[0]>node_val:
+                node_val=evals[0]
+                best_index=i
+            alpha=max(alpha,node_val)
+            if node_val>=beta:
+                break
+        return (node_val,best_index)
+    else:
+        best_index=0
+        node_val=math.inf
+        boards=get_all_moves(board1,board2,board1k,board2k,team)
+        for i in range(0,len(boards)):
+            evals=minimax(boards[i][1],boards[i][0],boards[i][3],boards[i][2],not team,depth-1,alpha,beta)
+            if evals[0]<node_val:
+                node_val=evals[0]
+                best_index=i
+            beta=min(beta,node_val)
+            if node_val<=alpha:
+                break
+        return (node_val,best_index)
 
 def main():
     running=True
@@ -417,9 +434,10 @@ def main():
                             piece_selected=True
                             selected_piece=pos
                 else:
-                    evals=minimax(board_red,board_white,board_rk,board_wk,False,5)
+                    evals=minimax(board_red,board_white,board_rk,board_wk,False,11,-1*math.inf,math.inf)
                     moves=get_all_moves(board_red,board_white,board_rk,board_wk,False)
-                    best_pos=evals.index(min(evals))
+                    best_pos=evals[1]
+                    print(evals[0])
                     board_red=moves[best_pos][0]
                     board_white=moves[best_pos][1]
                     board_rk=moves[best_pos][2]
